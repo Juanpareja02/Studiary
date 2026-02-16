@@ -5,7 +5,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Firebase](https://img.shields.io/badge/Firebase-11-orange?style=flat&logo=firebase)](https://firebase.google.com/)
 
-**Studiary** (u OrganiZen) es una solución integral diseñada para optimizar la organización estudiantil. A diferencia de las agendas tradicionales, Studiary combina una interfaz minimalista inspirada en la filosofía "Zen" con la potencia de una arquitectura moderna que permite su uso tanto en navegadores web como de forma nativa en dispositivos Android.
+**Studiary** es una solución integral diseñada para optimizar la organización estudiantil. A diferencia de las agendas tradicionales, Studiary combina una interfaz minimalista inspirada en la filosofía "Zen" con la potencia de una arquitectura moderna que permite su uso tanto en navegadores web como de forma nativa en dispositivos Android.
 
 ---
 
