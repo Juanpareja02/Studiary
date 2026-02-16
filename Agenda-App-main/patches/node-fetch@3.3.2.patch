@@ -1,0 +1,104 @@
+diff --git a/node_modules/node-fetch/src/request.js b/node_modules/node-fetch/src/request.js
+index 4561c6c..38234a9 100644
+--- a/node_modules/node-fetch/src/request.js
++++ b/node_modules/node-fetch/src/request.js
+@@ -5,7 +5,7 @@
+ import Stream, {PassThrough} from 'node:stream';
+ import zlib from 'node:zlib';
+ import {isBlob, Blob} from './body.js';
+-import {isAbortSignal} from './utils/is.js';
+-import {FetchError} from './errors/fetch-error.js';
+-import {AbortError} from './errors/abort-error.js';
+-import {referrer} from './utils/referrer.js';
++import {isAbortSignal} from './utils/is.js'
++import {FetchError} from './errors/fetch-error.js'
++import {AbortError} from './errors/abort-error.js'
++import {referrer} from './utils/referrer.js'
+ 
+ const {
+ 	CLIENT_REQUEST_TIMEOUT
+diff --git a/node_modules/node-fetch/src/utils/referrer.js b/node_modules/node-fetch/src/utils/referrer.js
+new file mode 100644
+index 0000000..32888d3
+--- /dev/null
++++ b/node_modules/node-fetch/src/utils/referrer.js
+@@ -0,0 +1,78 @@
++import {URL} from 'node:url';
++
++/**
++ * @see https://w3c.github.io/webappsec-referrer-policy/#determine-requests-referrer
++ * @param {Request} request
++ * @returns {string|undefined}
++ */
++export function referrer(request) {
++	// 1. If req’s referrer is "no-referrer", return no referrer.
++	if (request.referrer === 'no-referrer') {
++		return undefined;
++	}
++
++	// 2. If req’s referrer is "client", return req’s client’s outgoing referrer.
++	if (request.referrer === 'client') {
++		return request.referrer;
++	}
++
++	const policy = request.referrerPolicy;
++
++	// 3. If req’s referrer is an object, it is a URL. Let reqReferrer be req’s referrer.
++	const reqReferrer = new URL(request.referrer);
++
++	// 4. If req’s referrer-policy is the empty string, set it to the default referrer policy.
++	// Note: not implemented, this is the default
++
++	// 5. Let policy be req’s referrer-policy.
++
++	let outputReferrer = reqReferrer;
++
++	// 6. If the should-request-be-downgraded-due-to-referrer-policy algorithm
++	if (reqReferrer.protocol === 'https:' && (request.url.protocol !== 'https:')) {
++		// returns "downgrade" when applied to req,
++		if (!['strict-origin', 'strict-origin-when-cross-origin', 'no-referrer-when-downgrade'].includes(policy)) {
++			// then set output-referrer to no referrer.
++			outputReferrer = undefined;
++		}
++		// Otherwise, if the result of executing the get-the-subresource-request-referrer
++		// algorithm on req’s referrer, req’s URL, and policy is a URL,
++		// set output-referrer to that URL.
++	} else {
++		if (policy === 'no-referrer') {
++			outputReferrer = undefined;
++		} else if (policy === 'origin') {
++			outputReferrer = new URL(reqReferrer.origin);
++		} else if (policy === 'unsafe-url') {
++			// Note: not implemented, retained for completeness
++		} else if (request.url.origin === reqReferrer.origin) {
++			if (policy === 'same-origin') {
++				// Note: not implemented, retained for completeness
++			}
++		} else if (['strict-origin', 'strict-origin-when-cross-origin'].includes(policy)) {
++			outputReferrer = new URL(reqReferrer.origin);
++		} else if (policy === 'origin-when-cross-origin') {
++			outputReferrer = new URL(reqReferrer.origin);
++		}
++	}
++
++	if (outputReferrer) {
++		const url = new URL(outputReferrer);
++		// 7. Remove the username, password, and fragment from output-referrer.
++		url.username = '';
++		url.password = '';
++		url.hash = '';
++		return url.toString();
++	}
++
++	// 8. Return output-referrer.
++	return undefined;
++}
++
++/**
++ * @see https://w3c.github.io/webappsec-referrer-policy/#enum-referrer-policy
++ */
++export const ReferrerPolicy = new Set([
++	'', 'no-referrer', 'no-referrer-when-downgrade', 'same-origin',
++	'origin', 'strict-origin', 'origin-when-cross-origin',
++	'strict-origin-when-cross-origin', 'unsafe-url'
++]);
