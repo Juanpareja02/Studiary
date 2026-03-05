@@ -5,11 +5,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { PlusCircle, SlidersHorizontal } from 'lucide-react';
 import NewEventDialog from '@/components/new-event-dialog';
 import EventDetailSheet from '@/components/event-detail-sheet';
@@ -23,17 +24,25 @@ import SubjectsView from '@/components/subjects-view';
 import NotesView from '@/components/notes-view';
 import StudyModeView from '@/components/study-mode-view';
 import { addEvent as addEventUtil, updateEvent as updateEventUtil, deleteEvent as deleteEventUtil } from '@/lib/events';
-import type { Event, Subject, ClassScheduleEntry, Note } from '@/lib/types';
+import type { Event, Subject, ClassScheduleEntry, Note, ScheduleProfile } from '@/lib/types';
 import { Logo } from '@/components/logo';
 import { ThemeCustomizer } from '@/components/theme-customizer';
 import { useTheme } from '@/hooks/use-theme';
 import { useNotifications } from '@/hooks/use-notifications';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useAuth } from '@/lib/auth-context';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { LogOut } from 'lucide-react';
+import { syncToFirestore, loadFromFirestore } from '@/lib/sync';
+import { useRouter } from 'next/navigation';
+import { initializeAdMob, showBanner } from '@/lib/admob';
 
-const EVENTS_STORAGE_KEY = 'moflets-app-events-v3';
-const SUBJECTS_STORAGE_KEY = 'moflets-app-subjects-v3';
-const SCHEDULE_STORAGE_KEY = 'moflets-app-schedule-v3';
-const NOTES_STORAGE_KEY = 'moflets-app-notes-v1';
+const getEventsKey = (uid: string) => `studiary-events-${uid}-v3`;
+const getSubjectsKey = (uid: string) => `studiary-subjects-${uid}-v3`;
+const getScheduleKey = (uid: string) => `studiary-schedule-${uid}-v3`;
+const getProfilesKey = (uid: string) => `studiary-profiles-${uid}-v1`;
+const getNotesKey = (uid: string) => `studiary-notes-${uid}-v1`;
+const DEFAULT_PROFILE_ID = 'default';
 
 
 const getInitialState = <T,>(key: string): T | [] => {
@@ -45,14 +54,14 @@ const getInitialState = <T,>(key: string): T | [] => {
     if (saved) {
       const parsed = JSON.parse(saved);
       // Date hydration
-      if (key === EVENTS_STORAGE_KEY) {
+      if (key.includes('events')) {
         return (parsed as any[]).map(event => ({
           ...event,
           startDate: new Date(event.startDate),
           endDate: event.endDate ? new Date(event.endDate) : undefined,
         })) as T;
       }
-       if (key === NOTES_STORAGE_KEY) {
+      if (key.includes('notes')) {
         return (parsed as any[]).map(note => ({
           ...note,
           createdAt: new Date(note.createdAt),
@@ -72,8 +81,9 @@ export default function PlannerPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [schedule, setSchedule] = useState<ClassScheduleEntry[]>([]);
+  const [profiles, setProfiles] = useState<ScheduleProfile[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
-  
+
   const [isClient, setIsClient] = useState(false);
   const [isNewEventDialogOpen, setIsNewEventDialogOpen] = useState(false);
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false);
@@ -82,42 +92,144 @@ export default function PlannerPage() {
   const [initialDate, setInitialDate] = useState<Date | undefined>(undefined);
   const [initialTime, setInitialTime] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState("summary");
-  
+
+  const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth();
+  const router = useRouter();
+
   useTheme(); // Initialize and apply the theme
   useNotifications(events); // Initialize and manage notifications
 
   useEffect(() => {
-    setEvents(getInitialState<Event[]>(EVENTS_STORAGE_KEY));
-    setSubjects(getInitialState<Subject[]>(SUBJECTS_STORAGE_KEY));
-    setSchedule(getInitialState<ClassScheduleEntry[]>(SCHEDULE_STORAGE_KEY));
-    setNotes(getInitialState<Note[]>(NOTES_STORAGE_KEY));
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
     setIsClient(true);
-  }, []);
-
-  const updateAndSave = useCallback(<T,>(setter: React.Dispatch<React.SetStateAction<T[]>>, key: string) => {
-    return (data: T[]) => {
-      setter(data);
-      try {
-        if (typeof window !== 'undefined') {
-            let dataToSave = data;
-            if (key === NOTES_STORAGE_KEY) {
-                 dataToSave = (data as Note[]).map(note => {
-                    const { fileDataUri, ...rest } = note;
-                    return rest;
-                }) as T[];
-            }
-          window.localStorage.setItem(key, JSON.stringify(dataToSave));
-        }
-      } catch (error) {
-        console.error(`Error saving ${key} to localStorage:`, error);
-      }
+    // Inicializar AdMob
+    const setupAds = async () => {
+      await initializeAdMob();
+      await showBanner();
     };
+    setupAds();
   }, []);
 
-  const setAndSaveEvents = useCallback(updateAndSave(setEvents, EVENTS_STORAGE_KEY), [updateAndSave]);
-  const setAndSaveSubjects = useCallback(updateAndSave(setSubjects, SUBJECTS_STORAGE_KEY), [updateAndSave]);
-  const setAndSaveSchedule = useCallback(updateAndSave(setSchedule, SCHEDULE_STORAGE_KEY), [updateAndSave]);
-  const setAndSaveNotes = useCallback(updateAndSave(setNotes, NOTES_STORAGE_KEY), [updateAndSave]);
+  // Sync from Cloud and local storage when user logs in
+  useEffect(() => {
+    if (user && !authLoading) {
+      const uid = user.uid;
+
+      // Load from namespaced localStorage first for immediate UI
+      const localEvents = getInitialState<Event[]>(getEventsKey(uid));
+      const localSubjects = getInitialState<Subject[]>(getSubjectsKey(uid));
+      const localProfiles = getInitialState<ScheduleProfile[]>(getProfilesKey(uid)) || [{ id: DEFAULT_PROFILE_ID, name: 'Horario Principal' }];
+      const localSchedule = (getInitialState<ClassScheduleEntry[]>(getScheduleKey(uid)) || []).map(entry => ({
+        ...entry,
+        profileId: entry.profileId || DEFAULT_PROFILE_ID
+      }));
+      const localNotes = getInitialState<Note[]>(getNotesKey(uid));
+
+      setEvents(localEvents);
+      setSubjects(localSubjects);
+      setProfiles(localProfiles);
+      setSchedule(localSchedule);
+      setNotes(localNotes);
+
+      const syncData = async () => {
+        const cloudData = await loadFromFirestore(user);
+        if (cloudData) {
+          if (cloudData[getEventsKey(uid)]) {
+            const parsedEvents = (cloudData[getEventsKey(uid)] as any[]).map(event => ({
+              ...event,
+              startDate: new Date(event.startDate),
+              endDate: event.endDate ? new Date(event.endDate) : undefined,
+            })) as Event[];
+            setEvents(parsedEvents);
+            window.localStorage.setItem(getEventsKey(uid), JSON.stringify(parsedEvents));
+          }
+          if (cloudData[getSubjectsKey(uid)]) {
+            setSubjects(cloudData[getSubjectsKey(uid)]);
+            window.localStorage.setItem(getSubjectsKey(uid), JSON.stringify(cloudData[getSubjectsKey(uid)]));
+          }
+          if (cloudData[getScheduleKey(uid)]) {
+            setSchedule(cloudData[getScheduleKey(uid)]);
+            window.localStorage.setItem(getScheduleKey(uid), JSON.stringify(cloudData[getScheduleKey(uid)]));
+          }
+          if (cloudData[getProfilesKey(uid)]) {
+            setProfiles(cloudData[getProfilesKey(uid)]);
+            window.localStorage.setItem(getProfilesKey(uid), JSON.stringify(cloudData[getProfilesKey(uid)]));
+          }
+          if (cloudData[getNotesKey(uid)]) {
+            const parsedNotes = (cloudData[getNotesKey(uid)] as any[]).map(note => ({
+              ...note,
+              createdAt: new Date(note.createdAt),
+              updatedAt: new Date(note.updatedAt),
+            })) as Note[];
+            setNotes(parsedNotes);
+            window.localStorage.setItem(getNotesKey(uid), JSON.stringify(cloudData[getNotesKey(uid)]));
+          }
+        }
+      };
+      syncData();
+    } else if (!authLoading && !user) {
+      // Clear state on logout
+      setEvents([]);
+      setSubjects([]);
+      setSchedule([]);
+      setProfiles([]);
+      setNotes([]);
+    }
+  }, [user, authLoading]);
+
+  const setAndSaveEvents = useCallback((data: Event[]) => {
+    setEvents(data);
+    if (user) {
+      const key = getEventsKey(user.uid);
+      window.localStorage.setItem(key, JSON.stringify(data));
+      syncToFirestore(user, key, data);
+    }
+  }, [user]);
+
+  const setAndSaveSubjects = useCallback((data: Subject[]) => {
+    setSubjects(data);
+    if (user) {
+      const key = getSubjectsKey(user.uid);
+      window.localStorage.setItem(key, JSON.stringify(data));
+      syncToFirestore(user, key, data);
+    }
+  }, [user]);
+
+  const setAndSaveSchedule = useCallback((data: ClassScheduleEntry[]) => {
+    setSchedule(data);
+    if (user) {
+      const key = getScheduleKey(user.uid);
+      window.localStorage.setItem(key, JSON.stringify(data));
+      syncToFirestore(user, key, data);
+    }
+  }, [user]);
+
+  const setAndSaveProfiles = useCallback((data: ScheduleProfile[]) => {
+    setProfiles(data);
+    if (user) {
+      const key = getProfilesKey(user.uid);
+      window.localStorage.setItem(key, JSON.stringify(data));
+      syncToFirestore(user, key, data);
+    }
+  }, [user]);
+
+  const setAndSaveNotes = useCallback((data: Note[]) => {
+    setNotes(data);
+    if (user) {
+      const key = getNotesKey(user.uid);
+      const dataToSave = data.map(n => {
+        const { fileDataUri, ...rest } = n;
+        return rest;
+      });
+      window.localStorage.setItem(key, JSON.stringify(dataToSave));
+      syncToFirestore(user, key, dataToSave);
+    }
+  }, [user]);
 
 
   const handleAddEvent = (eventData: Omit<Event, 'id'>): Event => {
@@ -125,7 +237,7 @@ export default function PlannerPage() {
     setAndSaveEvents(updatedEvents);
     return newEvent;
   };
-  
+
   const handleUpdateEvent = (eventData: Event): Event => {
     const newEvents = updateEventUtil(eventData, events);
     setAndSaveEvents(newEvents);
@@ -139,14 +251,14 @@ export default function PlannerPage() {
     setIsDetailSheetOpen(false); // Close detail view on delete
     setSelectedEvent(undefined);
   }
-  
+
   const handleDayClick = (date: Date) => {
     setInitialDate(date);
     setInitialTime(undefined);
     setEditingEvent(undefined);
     setIsNewEventDialogOpen(true);
   };
-  
+
   const handleEventClick = (event: Event) => {
     setSelectedEvent(event);
     setIsDetailSheetOpen(true);
@@ -164,11 +276,11 @@ export default function PlannerPage() {
     setEditingEvent(undefined);
     setIsNewEventDialogOpen(true);
   };
-  
+
   useEffect(() => {
     // If the edit dialog is closed, clear the editing event
-    if(!isNewEventDialogOpen) {
-        setEditingEvent(undefined);
+    if (!isNewEventDialogOpen) {
+      setEditingEvent(undefined);
     }
   }, [isNewEventDialogOpen]);
 
@@ -184,7 +296,7 @@ export default function PlannerPage() {
     { value: 'study-mode', label: 'Modo Estudio' },
   ]
 
-  if (!isClient) {
+  if (!isClient || authLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Logo className="h-16 w-16 text-primary animate-pulse" />
@@ -197,12 +309,23 @@ export default function PlannerPage() {
       <div className="container mx-auto p-4 sm:p-6 lg:p-8">
         <header className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-             <Logo className="h-10 w-10 text-primary" />
-             <h1 className="text-2xl sm:text-3xl font-headline font-bold text-foreground">
+            <Logo className="h-10 w-10 text-primary" />
+            <h1 className="text-2xl sm:text-3xl font-headline font-bold text-foreground">
               Studiary
             </h1>
           </div>
           <div className="flex items-center gap-2">
+            {!authLoading && user ? (
+              <div className="flex items-center gap-2 mr-2">
+                <Avatar className="h-8 w-8 border border-primary/20">
+                  <AvatarImage src={user.photoURL || undefined} />
+                  <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}</AvatarFallback>
+                </Avatar>
+                <Button onClick={signOut} variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors">
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : null}
             <ThemeCustomizer />
             <Button onClick={handleOpenNewEventDialog} className="bg-primary text-primary-foreground hover:bg-primary/90 w-full sm:w-auto shadow-sm">
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -221,7 +344,7 @@ export default function PlannerPage() {
           initialTime={initialTime}
           subjects={subjects}
         />
-        
+
         <EventDetailSheet
           event={selectedEvent}
           isOpen={isDetailSheetOpen}
@@ -234,29 +357,29 @@ export default function PlannerPage() {
 
         <main>
           <Tabs defaultValue="summary" className="w-full" value={activeTab} onValueChange={setActiveTab}>
-             <div className="sm:hidden mb-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full">
+            <div className="sm:hidden mb-4">
+              <Select value={activeTab} onValueChange={setActiveTab}>
+                <SelectTrigger className="w-full">
+                  <div className="flex items-center">
                     <SlidersHorizontal className="mr-2 h-4 w-4" />
-                    Vista: {tabs.find(t => t.value === activeTab)?.label}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-full">
+                    <span>Vista: {tabs.find(t => t.value === activeTab)?.label}</span>
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
                   {tabs.map(tab => (
-                    <DropdownMenuItem key={tab.value} onClick={() => setActiveTab(tab.value)}>
+                    <SelectItem key={tab.value} value={tab.value}>
                       {tab.label}
-                    </DropdownMenuItem>
+                    </SelectItem>
                   ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                </SelectContent>
+              </Select>
             </div>
             <ScrollArea className="hidden sm:block whitespace-nowrap rounded-lg mb-4">
               <TabsList className="inline-flex w-max p-1 space-x-1 bg-muted rounded-xl">
                 {tabs.map(tab => (
-                   <TabsTrigger key={tab.value} value={tab.value}
-                     className="px-3 py-1.5 text-sm font-medium transition-all rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
-                   >{tab.label}</TabsTrigger>
+                  <TabsTrigger key={tab.value} value={tab.value}
+                    className="px-3 py-1.5 text-sm font-medium transition-all rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                  >{tab.label}</TabsTrigger>
                 ))}
               </TabsList>
             </ScrollArea>
@@ -272,8 +395,8 @@ export default function PlannerPage() {
             <TabsContent value="weekly">
               <WeeklyCalendar events={events} onDayClick={handleDayClick} onEventClick={handleEventClick} />
             </TabsContent>
-             <TabsContent value="schedule">
-              <ScheduleView schedule={schedule} setSchedule={setAndSaveSchedule} subjects={subjects} />
+            <TabsContent value="schedule">
+              <ScheduleView schedule={schedule} setSchedule={setAndSaveSchedule} subjects={subjects} profiles={profiles} setProfiles={setAndSaveProfiles} />
             </TabsContent>
             <TabsContent value="subjects">
               <SubjectsView subjects={subjects} setSubjects={setAndSaveSubjects} />
@@ -284,7 +407,7 @@ export default function PlannerPage() {
             <TabsContent value="grades">
               <GradesView events={events} onEventClick={handleEventClick} subjects={subjects} />
             </TabsContent>
-             <TabsContent value="study-mode">
+            <TabsContent value="study-mode">
               <StudyModeView />
             </TabsContent>
           </Tabs>

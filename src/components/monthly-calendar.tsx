@@ -73,18 +73,18 @@ const DayCell = ({
           <button
             key={event.id}
             onClick={(e) => { e.stopPropagation(); onEventClick(event); }}
-            style={{backgroundColor: event.color ? event.color : undefined}}
+            style={{ backgroundColor: event.color ? event.color : undefined }}
             className={cn(
-                "w-full text-left text-xs p-1 rounded-md text-primary-foreground/90 truncate flex items-center gap-1",
-                !event.color && getEventColor(event.type)
+              "w-full text-left text-xs p-1 rounded-md text-primary-foreground/90 truncate flex items-center gap-1",
+              !event.color && getEventColor(event.type)
             )}
           >
             <EventIcon type={event.type} className="w-3 h-3 shrink-0" />
             <span className="truncate">{event.title}</span>
           </button>
         ))}
-         {dayEvents.length > 3 && (
-            <p className="text-xs text-muted-foreground text-center">...</p>
+        {dayEvents.length > 3 && (
+          <p className="text-xs text-muted-foreground text-center">...</p>
         )}
       </div>
     </ScrollArea>
@@ -121,34 +121,34 @@ const DayDetailPanel = ({
     <CardContent className="pt-4 flex flex-col h-full">
       <ScrollArea className="flex-1 -mx-6">
         <div className="px-6">
-            {events.length > 0 ? (
+          {events.length > 0 ? (
             <ul className="space-y-4">
-                {events.map((event) => (
-                <li key={event.id} style={{backgroundColor: event.color ? event.color : undefined}} className={cn("flex items-start space-x-3 p-3 rounded-md cursor-pointer", !event.color && getEventColor(event.type))} onClick={() => onEventClick(event)}>
-                    <div className="flex-shrink-0 pt-1">
+              {events.map((event) => (
+                <li key={event.id} style={{ backgroundColor: event.color ? event.color : undefined }} className={cn("flex items-start space-x-3 p-3 rounded-md cursor-pointer", !event.color && getEventColor(event.type))} onClick={() => onEventClick(event)}>
+                  <div className="flex-shrink-0 pt-1">
                     <EventIcon type={event.type} className="text-white" />
-                    </div>
-                    <div>
+                  </div>
+                  <div>
                     <p className="font-semibold text-white">{event.title}</p>
                     {event.startDate && (
-                        <p className="text-xs text-white/80 mt-1">
-                        {format(event.startDate, 'p', { locale: es })}
-                        {event.endDate && ` - ${format(event.endDate, 'p', { locale: es })}`}
-                        </p>
+                      <p className="text-xs text-white/80 mt-1 font-medium">
+                        {format(event.startDate, isSameDay(event.startDate, date) ? 'p' : 'PP p', { locale: es })}
+                        {event.endDate && ` - ${format(event.endDate, isSameDay(event.endDate, event.startDate) ? 'p' : 'PP p', { locale: es })}`}
+                      </p>
                     )}
-                    </div>
+                  </div>
                 </li>
-                ))}
+              ))}
             </ul>
-            ) : (
+          ) : (
             <div className="flex items-center justify-center h-full">
-                <p className="text-muted-foreground text-center">No hay eventos para este día.</p>
+              <p className="text-muted-foreground text-center">No hay eventos para este día.</p>
             </div>
-            )}
+          )}
         </div>
       </ScrollArea>
-       <Button onClick={() => onDayClick(date)} variant="outline" className="mt-4">
-         Añadir evento a este día
+      <Button onClick={() => onDayClick(date)} variant="outline" className="mt-4">
+        Añadir evento a este día
       </Button>
     </CardContent>
   </>
@@ -167,27 +167,27 @@ export default function MonthlyCalendar({ events, onDayClick, onEventClick }: Mo
 
   const days = eachDayOfInterval({ start: startDate, end: endDate });
   const weekdays = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
-  
+
   const selectedDayEvents = getEventsForDate(selectedDate, events);
 
   const handleDayCellClick = (day: Date) => {
     setSelectedDate(day);
   };
-  
+
   const handleSelectDayForDetail = (day: Date) => {
     setSelectedDate(day);
-    if(isMobile){
+    if (isMobile) {
       setIsSheetOpen(true);
     }
   };
-  
+
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const goToToday = () => {
     const today = new Date();
     setCurrentDate(today);
     setSelectedDate(today);
-    if(isMobile){
+    if (isMobile) {
       handleSelectDayForDetail(today);
     }
   }
@@ -199,9 +199,9 @@ export default function MonthlyCalendar({ events, onDayClick, onEventClick }: Mo
           {format(currentDate, "MMMM 'de' yyyy", { locale: es })}
         </CardTitle>
         <div className="flex items-center gap-2">
-           <Button variant="outline" size="icon" onClick={prevMonth}>
+          <Button variant="outline" size="icon" onClick={prevMonth}>
             <ChevronLeft className="h-4 w-4" />
-           </Button>
+          </Button>
           <Button variant="outline" onClick={goToToday} className={cn(isToday(currentDate) && "bg-primary/30")}>
             Hoy
           </Button>
@@ -215,7 +215,7 @@ export default function MonthlyCalendar({ events, onDayClick, onEventClick }: Mo
           {weekdays.map((day) => (
             <div key={day} className="text-center font-semibold text-muted-foreground text-sm py-2 border-t border-l border-border/50 capitalize">
               <span className="hidden md:inline">{day}</span>
-              <span className="md:hidden">{day.substring(0,3)}</span>
+              <span className="md:hidden">{day.substring(0, 3)}</span>
             </div>
           ))}
           {days.map((day) => (
@@ -236,14 +236,14 @@ export default function MonthlyCalendar({ events, onDayClick, onEventClick }: Mo
 
   if (isMobile) {
     return (
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetTrigger asChild>
-          {renderGrid()}
-        </SheetTrigger>
-        <SheetContent side="bottom" className="h-[80%] flex flex-col">
-          <DayDetailPanel date={selectedDate} events={selectedDayEvents} onEventClick={onEventClick} onDayClick={onDayClick} isSheet={true} />
-        </SheetContent>
-      </Sheet>
+      <div className="flex flex-col gap-4">
+        {renderGrid()}
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <SheetContent side="bottom" className="h-[80%] flex flex-col">
+            <DayDetailPanel date={selectedDate} events={selectedDayEvents} onEventClick={onEventClick} onDayClick={onDayClick} isSheet={true} />
+          </SheetContent>
+        </Sheet>
+      </div>
     );
   }
 

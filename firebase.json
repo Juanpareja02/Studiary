@@ -1,0 +1,25 @@
+{
+  "firestore": {
+    "database": "(default)",
+    "location": "eur3",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "auth": {
+    "providers": {
+      "emailPassword": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Studiary App",
+        "supportEmail": "parejajuan17@gmail.com"
+      }
+    }
+  },
+  "hosting": {
+    "public": "out",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}

@@ -1,0 +1,57 @@
+Starting a Gradle Daemon, 2 incompatible Daemons could not be reused, use --status for details
+
+> Configure project :app
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Configure project :capacitor-cordova-android-plugins
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Task :app:signingReport
+Variant: debug
+Config: debug
+Store: C:\Users\parej\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 26:36:1B:57:7D:5B:D4:77:6E:E9:9A:96:3C:EC:A0:86
+SHA1: C9:95:2C:6D:61:84:37:C5:81:54:EE:E2:88:83:44:24:28:08:70:75
+SHA-256: 22:84:D2:20:CB:EE:58:D7:9C:9E:1F:23:3A:31:04:94:E5:D7:38:27:33:D5:07:83:95:DE:61:77:DA:62:32:B6
+Valid until: jueves, 26 de agosto de 2055
+----------
+Variant: release
+Config: null
+Store: null
+Alias: null
+----------
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\parej\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 26:36:1B:57:7D:5B:D4:77:6E:E9:9A:96:3C:EC:A0:86
+SHA1: C9:95:2C:6D:61:84:37:C5:81:54:EE:E2:88:83:44:24:28:08:70:75
+SHA-256: 22:84:D2:20:CB:EE:58:D7:9C:9E:1F:23:3A:31:04:94:E5:D7:38:27:33:D5:07:83:95:DE:61:77:DA:62:32:B6
+Valid until: jueves, 26 de agosto de 2055
+----------
+
+> Task :capacitor-android:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\parej\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 26:36:1B:57:7D:5B:D4:77:6E:E9:9A:96:3C:EC:A0:86
+SHA1: C9:95:2C:6D:61:84:37:C5:81:54:EE:E2:88:83:44:24:28:08:70:75
+SHA-256: 22:84:D2:20:CB:EE:58:D7:9C:9E:1F:23:3A:31:04:94:E5:D7:38:27:33:D5:07:83:95:DE:61:77:DA:62:32:B6
+Valid until: jueves, 26 de agosto de 2055
+----------
+
+> Task :capacitor-cordova-android-plugins:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\parej\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 26:36:1B:57:7D:5B:D4:77:6E:E9:9A:96:3C:EC:A0:86
+SHA1: C9:95:2C:6D:61:84:37:C5:81:54:EE:E2:88:83:44:24:28:08:70:75
+SHA-256: 22:84:D2:20:CB:EE:58:D7:9C:9E:1F:23:3A:31:04:94:E5:D7:38:27:33:D5:07:83:95:DE:61:77:DA:62:32:B6
+Valid until: jueves, 26 de agosto de 2055
+----------
+
+BUILD SUCCESSFUL in 13s
+3 actionable tasks: 3 executed

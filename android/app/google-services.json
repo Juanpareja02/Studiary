@@ -1,0 +1,29 @@
+{
+    "project_info": {
+        "project_number": "36420802867",
+        "project_id": "studiary-app-2026",
+        "storage_bucket": "studiary-app-2026.firebasestorage.app"
+    },
+    "client": [
+        {
+            "client_info": {
+                "mobilesdk_app_id": "1:36420802867:android:75cb2ad72206fd55940646",
+                "android_client_info": {
+                    "package_name": "com.studiary.app"
+                }
+            },
+            "oauth_client": [],
+            "api_key": [
+                {
+                    "current_key": "AIzaSyAC4BtIajiM6UdSSWvi7xLukMmhbtLFN6M"
+                }
+            ],
+            "services": {
+                "appinvite_service": {
+                    "other_platform_oauth_client": []
+                }
+            }
+        }
+    ],
+    "configuration_version": "1"
+}

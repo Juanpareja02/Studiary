@@ -8,10 +8,10 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getEventColor }from '@/lib/colors';
+import { getEventColor } from '@/lib/colors';
 import { cn } from '@/lib/utils';
 import type { Event, EventType } from '@/lib/types';
-import { format, isFuture, isPast } from 'date-fns';
+import { format, isFuture, isPast, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { EventIcon } from './icons';
 
@@ -43,12 +43,12 @@ export default function SummaryView({ events, onEventClick }: SummaryViewProps) 
 
     if (aIsPast && !bIsPast) return 1; // b (future) comes first
     if (!aIsPast && bIsPast) return -1; // a (future) comes first
-    
+
     // If both are future, sort by start date ascending
     if (!aIsPast && !bIsPast) {
       return a.startDate.getTime() - b.startDate.getTime();
     }
-    
+
     // If both are past, sort by start date descending (most recent past first)
     return b.startDate.getTime() - a.startDate.getTime();
   });
@@ -69,7 +69,7 @@ export default function SummaryView({ events, onEventClick }: SummaryViewProps) 
             <CardHeader>
               <CardTitle className="flex items-center gap-3 font-headline text-xl capitalize">
                 <span className={cn("p-2 rounded-full", getEventColor(type))}>
-                    <EventIcon type={type} className="h-5 w-5 text-white" />
+                  <EventIcon type={type} className="h-5 w-5 text-white" />
                 </span>
                 {getTitleForType(type)}
               </CardTitle>
@@ -83,7 +83,7 @@ export default function SummaryView({ events, onEventClick }: SummaryViewProps) 
                       className="hover:no-underline"
                     >
                       <div className={cn("flex items-center gap-2", isPast(event.endDate || event.startDate) && "opacity-60")}>
-                        {event.color && <div className="h-4 w-4 rounded-full border" style={{backgroundColor: event.color}} />}
+                        {event.color && <div className="h-4 w-4 rounded-full border" style={{ backgroundColor: event.color }} />}
                         <div className="flex flex-col text-left">
                           <span className="font-semibold">{event.title}</span>
                           <span className="text-sm text-muted-foreground">
@@ -97,20 +97,20 @@ export default function SummaryView({ events, onEventClick }: SummaryViewProps) 
                     <AccordionContent>
                       <div className="space-y-2 pl-2 border-l-2 border-primary/50 ml-2">
                         {event.description && (
-                            <p className="text-sm text-muted-foreground">{event.description}</p>
+                          <p className="text-sm text-muted-foreground">{event.description}</p>
                         )}
                         <p className="text-sm">
-                            <span className="font-semibold">Inicio:</span>{' '}
-                            {format(event.startDate, 'p', { locale: es })}
+                          <span className="font-semibold">Inicio:</span>{' '}
+                          {format(event.startDate, 'p', { locale: es })}
                         </p>
                         {event.endDate && (
-                             <p className="text-sm">
-                                <span className="font-semibold">Fin:</span>{' '}
-                                {format(event.endDate, 'p', { locale: es })}
-                            </p>
+                          <p className="text-sm">
+                            <span className="font-semibold">Fin:</span>{' '}
+                            {format(event.endDate, isSameDay(event.startDate, event.endDate) ? 'p' : 'PP p', { locale: es })}
+                          </p>
                         )}
-                         <button onClick={() => onEventClick(event)} className="text-primary hover:underline text-sm font-semibold">
-                            Ver detalles
+                        <button onClick={() => onEventClick(event)} className="text-primary hover:underline text-sm font-semibold">
+                          Ver detalles
                         </button>
                       </div>
                     </AccordionContent>

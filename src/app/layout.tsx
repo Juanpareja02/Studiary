@@ -1,11 +1,12 @@
-import type {Metadata} from 'next';
+import type { Metadata } from 'next';
 import { Inter, Poppins } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
+import { AuthProvider } from '@/lib/auth-context';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-const poppins = Poppins({ 
-  subsets: ['latin'], 
+const poppins = Poppins({
+  subsets: ['latin'],
   weight: ['400', '600', '700'],
   variable: '--font-poppins'
 });
@@ -24,8 +25,10 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${inter.variable} ${poppins.variable} font-sans antialiased`}>
-        {children}
-        <Toaster />
+        <AuthProvider>
+          {children}
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );

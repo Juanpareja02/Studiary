@@ -26,15 +26,23 @@ export interface Subject {
   id: string;
   name: string;
   color: string;
+  classroom?: string; // Nuevo campo aula
   objectives?: Objective[];
 }
 
+export interface ScheduleProfile {
+  id: string;
+  name: string;
+}
+
 export interface ClassScheduleEntry {
-  id:string;
+  id: string;
+  profileId: string; // IDs para distinguir entre distintos horarios
   dayOfWeek: number; // 0 for Sunday, 1 for Monday, etc.
   startTime: string; // "HH:mm"
   endTime: string; // "HH:mm"
   subjectId: string;
+  note?: string; // Notas adicionales para cada celda
 }
 
 export type NoteType = 'text' | 'pdf' | 'image';
