@@ -43,3 +43,11 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+
+# local release and testing artifacts
+/.firebase/hosting.*.cache
+/pixel-*.png
+/marketing/
+/release-assets/
+/tools/
+/storage.rules

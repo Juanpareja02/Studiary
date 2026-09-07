@@ -33,7 +33,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/lib/auth-context';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut } from 'lucide-react';
-import { syncToFirestore, loadFromFirestore } from '@/lib/sync';
+import { syncToCloud, loadFromCloud } from '@/lib/sync';
 import { useRouter } from 'next/navigation';
 import { initializeAdMob, showBanner } from '@/lib/admob';
 
@@ -43,6 +43,12 @@ const getScheduleKey = (uid: string) => `studiary-schedule-${uid}-v3`;
 const getProfilesKey = (uid: string) => `studiary-profiles-${uid}-v1`;
 const getNotesKey = (uid: string) => `studiary-notes-${uid}-v1`;
 const DEFAULT_PROFILE_ID = 'default';
+
+const readCloudField = <T,>(
+  data: Record<string, unknown>,
+  canonical: string,
+  legacy: string,
+) => (data[canonical] ?? data[legacy]) as T | undefined;
 
 
 const getInitialState = <T,>(key: string): T | [] => {
@@ -118,7 +124,7 @@ export default function PlannerPage() {
   // Sync from Cloud and local storage when user logs in
   useEffect(() => {
     if (user && !authLoading) {
-      const uid = user.uid;
+      const uid = user.id;
 
       // Load from namespaced localStorage first for immediate UI
       const localEvents = getInitialState<Event[]>(getEventsKey(uid));
@@ -137,10 +143,11 @@ export default function PlannerPage() {
       setNotes(localNotes);
 
       const syncData = async () => {
-        const cloudData = await loadFromFirestore(user);
+        const cloudData = await loadFromCloud(user);
         if (cloudData) {
-          if (cloudData[getEventsKey(uid)]) {
-            const parsedEvents = (cloudData[getEventsKey(uid)] as any[]).map(event => ({
+          const remoteEvents = readCloudField<any[]>(cloudData, 'events', getEventsKey(uid));
+          if (remoteEvents) {
+            const parsedEvents = remoteEvents.map(event => ({
               ...event,
               startDate: new Date(event.startDate),
               endDate: event.endDate ? new Date(event.endDate) : undefined,
@@ -148,26 +155,33 @@ export default function PlannerPage() {
             setEvents(parsedEvents);
             window.localStorage.setItem(getEventsKey(uid), JSON.stringify(parsedEvents));
           }
-          if (cloudData[getSubjectsKey(uid)]) {
-            setSubjects(cloudData[getSubjectsKey(uid)]);
-            window.localStorage.setItem(getSubjectsKey(uid), JSON.stringify(cloudData[getSubjectsKey(uid)]));
+          const remoteSubjects = readCloudField<Subject[]>(cloudData, 'subjects', getSubjectsKey(uid));
+          if (remoteSubjects) {
+            const parsedSubjects = remoteSubjects;
+            setSubjects(parsedSubjects);
+            window.localStorage.setItem(getSubjectsKey(uid), JSON.stringify(parsedSubjects));
           }
-          if (cloudData[getScheduleKey(uid)]) {
-            setSchedule(cloudData[getScheduleKey(uid)]);
-            window.localStorage.setItem(getScheduleKey(uid), JSON.stringify(cloudData[getScheduleKey(uid)]));
+          const remoteSchedule = readCloudField<ClassScheduleEntry[]>(cloudData, 'schedule', getScheduleKey(uid));
+          if (remoteSchedule) {
+            const parsedSchedule = remoteSchedule;
+            setSchedule(parsedSchedule);
+            window.localStorage.setItem(getScheduleKey(uid), JSON.stringify(parsedSchedule));
           }
-          if (cloudData[getProfilesKey(uid)]) {
-            setProfiles(cloudData[getProfilesKey(uid)]);
-            window.localStorage.setItem(getProfilesKey(uid), JSON.stringify(cloudData[getProfilesKey(uid)]));
+          const remoteProfiles = readCloudField<ScheduleProfile[]>(cloudData, 'profiles', getProfilesKey(uid));
+          if (remoteProfiles) {
+            const parsedProfiles = remoteProfiles;
+            setProfiles(parsedProfiles);
+            window.localStorage.setItem(getProfilesKey(uid), JSON.stringify(parsedProfiles));
           }
-          if (cloudData[getNotesKey(uid)]) {
-            const parsedNotes = (cloudData[getNotesKey(uid)] as any[]).map(note => ({
+          const remoteNotes = readCloudField<any[]>(cloudData, 'notes', getNotesKey(uid));
+          if (remoteNotes) {
+            const parsedNotes = remoteNotes.map(note => ({
               ...note,
               createdAt: new Date(note.createdAt),
               updatedAt: new Date(note.updatedAt),
             })) as Note[];
             setNotes(parsedNotes);
-            window.localStorage.setItem(getNotesKey(uid), JSON.stringify(cloudData[getNotesKey(uid)]));
+            window.localStorage.setItem(getNotesKey(uid), JSON.stringify(remoteNotes));
           }
         }
       };
@@ -185,49 +199,49 @@ export default function PlannerPage() {
   const setAndSaveEvents = useCallback((data: Event[]) => {
     setEvents(data);
     if (user) {
-      const key = getEventsKey(user.uid);
+      const key = getEventsKey(user.id);
       window.localStorage.setItem(key, JSON.stringify(data));
-      syncToFirestore(user, key, data);
+      syncToCloud(user, key, data);
     }
   }, [user]);
 
   const setAndSaveSubjects = useCallback((data: Subject[]) => {
     setSubjects(data);
     if (user) {
-      const key = getSubjectsKey(user.uid);
+      const key = getSubjectsKey(user.id);
       window.localStorage.setItem(key, JSON.stringify(data));
-      syncToFirestore(user, key, data);
+      syncToCloud(user, key, data);
     }
   }, [user]);
 
   const setAndSaveSchedule = useCallback((data: ClassScheduleEntry[]) => {
     setSchedule(data);
     if (user) {
-      const key = getScheduleKey(user.uid);
+      const key = getScheduleKey(user.id);
       window.localStorage.setItem(key, JSON.stringify(data));
-      syncToFirestore(user, key, data);
+      syncToCloud(user, key, data);
     }
   }, [user]);
 
   const setAndSaveProfiles = useCallback((data: ScheduleProfile[]) => {
     setProfiles(data);
     if (user) {
-      const key = getProfilesKey(user.uid);
+      const key = getProfilesKey(user.id);
       window.localStorage.setItem(key, JSON.stringify(data));
-      syncToFirestore(user, key, data);
+      syncToCloud(user, key, data);
     }
   }, [user]);
 
   const setAndSaveNotes = useCallback((data: Note[]) => {
     setNotes(data);
     if (user) {
-      const key = getNotesKey(user.uid);
+      const key = getNotesKey(user.id);
       const dataToSave = data.map(n => {
         const { fileDataUri, ...rest } = n;
         return rest;
       });
       window.localStorage.setItem(key, JSON.stringify(dataToSave));
-      syncToFirestore(user, key, dataToSave);
+      syncToCloud(user, key, dataToSave);
     }
   }, [user]);
 
@@ -318,8 +332,8 @@ export default function PlannerPage() {
             {!authLoading && user ? (
               <div className="flex items-center gap-2 mr-2">
                 <Avatar className="h-8 w-8 border border-primary/20">
-                  <AvatarImage src={user.photoURL || undefined} />
-                  <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}</AvatarFallback>
+                  <AvatarImage src={user.user_metadata?.avatar_url || user.user_metadata?.picture || undefined} />
+                  <AvatarFallback>{(user.user_metadata?.full_name || user.user_metadata?.name)?.charAt(0) || user.email?.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
                 <Button onClick={signOut} variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors">
                   <LogOut className="h-4 w-4" />

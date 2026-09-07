@@ -1,35 +1,58 @@
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from './firebase';
-import { User } from 'firebase/auth';
+import type { User } from '@supabase/supabase-js';
+import { supabaseClient } from './supabase';
 
-export const syncToFirestore = async (user: User, dataKey: string, appData: any) => {
-    if (!db || !user) return;
-    const userRef = doc(db, 'users', user.uid);
+type CloudData = Record<string, unknown>;
+
+const cleanData = (value: unknown) => JSON.parse(JSON.stringify(value));
+
+const canonicalKey = (dataKey: string) => {
+    if (dataKey.includes('-events-')) return 'events';
+    if (dataKey.includes('-subjects-')) return 'subjects';
+    if (dataKey.includes('-schedule-')) return 'schedule';
+    if (dataKey.includes('-profiles-')) return 'profiles';
+    if (dataKey.includes('-notes-')) return 'notes';
+    return dataKey;
+};
+
+export const syncToCloud = async (user: User, dataKey: string, appData: unknown) => {
+    if (!supabaseClient || !user) return;
     try {
-        // Sanitize data before sending to Firestore (e.g. remove undefined / map Dates to ISO strings)
-        // Actually, JSON.parse(JSON.stringify()) is a quick way to clean up undefined values for Firestore
-        const cleanData = JSON.parse(JSON.stringify(appData));
-        await setDoc(userRef, {
-            data: {
-                [dataKey]: cleanData
-            },
-            updatedAt: serverTimestamp()
-        }, { merge: true });
+        const { data: row, error: readError } = await supabaseClient
+            .from('studiary_data')
+            .select('data')
+            .eq('user_id', user.id)
+            .maybeSingle();
+        if (readError) throw readError;
+
+        const existing = row?.data && typeof row.data === 'object'
+            ? row.data as CloudData
+            : {};
+        const key = canonicalKey(dataKey);
+        const { error } = await supabaseClient.from('studiary_data').upsert({
+            user_id: user.id,
+            data: { ...existing, [key]: cleanData(appData) },
+            updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+        if (error) throw error;
     } catch (error) {
-        console.error("Error syncing to Firestore:", error);
+        console.error('Error syncing Studiary:', error);
     }
 };
 
-export const loadFromFirestore = async (user: User) => {
-    if (!db || !user) return null;
-    const userRef = doc(db, 'users', user.uid);
+export const loadFromCloud = async (user: User) => {
+    if (!supabaseClient || !user) return null;
     try {
-        const docSnap = await getDoc(userRef);
-        if (docSnap.exists()) {
-            return docSnap.data().data;
-        }
+        const { data: row, error } = await supabaseClient
+            .from('studiary_data')
+            .select('data')
+            .eq('user_id', user.id)
+            .maybeSingle();
+        if (error) throw error;
+        return row?.data && typeof row.data === 'object'
+            ? row.data as CloudData
+            : null;
     } catch (error) {
-        console.error("Error loading from Firestore:", error);
+        console.error('Error loading Studiary:', error);
+        return null;
     }
-    return null;
 };

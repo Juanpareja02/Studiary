@@ -1,16 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import {
-    User,
-    onAuthStateChanged,
-    signInWithPopup,
-    GoogleAuthProvider,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    signOut as firebaseSignOut
-} from 'firebase/auth';
-import { auth } from './firebase';
+import type { User } from '@supabase/supabase-js';
+import { supabaseClient } from './supabase';
 
 interface AuthContextType {
     user: User | null;
@@ -37,58 +29,72 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!auth) {
+        const client = supabaseClient;
+        if (!client) {
             setLoading(false);
             return;
         }
 
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser);
-            setLoading(false);
-        });
+        let mounted = true;
+        const loadSession = async () => {
+            const { data } = await client.auth.getSession();
+            if (mounted) {
+                setUser(data.session?.user ?? null);
+                setLoading(false);
+            }
+        };
+        void loadSession();
 
-        return () => unsubscribe();
+        const { data: listener } = client.auth.onAuthStateChange(
+            (_event, session) => {
+                if (!mounted) return;
+                setUser(session?.user ?? null);
+                setLoading(false);
+            },
+        );
+
+        return () => {
+            mounted = false;
+            listener.subscription.unsubscribe();
+        };
     }, []);
 
     const signInWithGoogle = async () => {
-        if (!auth) return;
-        const provider = new GoogleAuthProvider();
-        try {
-            await signInWithPopup(auth, provider);
-        } catch (error) {
-            console.error("Error signing in with Google", error);
-            throw error;
-        }
+        if (!supabaseClient) throw new Error('Supabase no está configurado.');
+        const { error } = await supabaseClient.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: window.location.origin,
+            },
+        });
+        if (error) throw error;
     };
 
     const signInWithEmailPassword = async (e: string, p: string) => {
-        if (!auth) return;
-        try {
-            await signInWithEmailAndPassword(auth, e, p);
-        } catch (error) {
-            console.error("Error signing in with email/password", error);
-            throw error;
-        }
+        if (!supabaseClient) throw new Error('Supabase no está configurado.');
+        const { error } = await supabaseClient.auth.signInWithPassword({
+            email: e.trim(),
+            password: p,
+        });
+        if (error) throw error;
     };
 
     const registerWithEmailPassword = async (e: string, p: string) => {
-        if (!auth) return;
-        try {
-            await createUserWithEmailAndPassword(auth, e, p);
-        } catch (error) {
-            console.error("Error registering with email/password", error);
-            throw error;
+        if (!supabaseClient) throw new Error('Supabase no está configurado.');
+        const { data, error } = await supabaseClient.auth.signUp({
+            email: e.trim(),
+            password: p,
+        });
+        if (error) throw error;
+        if (!data.session) {
+            throw new Error('Cuenta creada. Revisa tu correo para confirmar el acceso.');
         }
     };
 
     const signOut = async () => {
-        if (!auth) return;
-        try {
-            await firebaseSignOut(auth);
-        } catch (error) {
-            console.error("Error signing out", error);
-            throw error;
-        }
+        if (!supabaseClient) return;
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) throw error;
     };
 
     return (

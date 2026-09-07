@@ -59,7 +59,7 @@ interface NewEventDialogProps {
   subjects: Subject[];
 }
 
-const eventTypes: EventType[] = ['prácticas', 'estudio', 'examen', 'personal'];
+const eventTypes = ['prácticas', 'estudio', 'examen', 'personal'] as const;
 
 const formSchema = z.object({
   title: z.string().min(2, {
