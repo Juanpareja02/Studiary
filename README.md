@@ -1,87 +1,202 @@
-# Studiary 🎓 - Sistema de Gestión Académica Multiplataforma
 
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat&logo=next.js)](https://nextjs.org/)
-[![Capacitor](https://img.shields.io/badge/Capacitor-7-blue?style=flat&logo=capacitor)](https://capacitorjs.com/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
-[![Firebase](https://img.shields.io/badge/Firebase-11-orange?style=flat&logo=firebase)](https://firebase.google.com/)
+<h1 align="center">Studiary</h1>
 
-**Studiary** es una solución integral diseñada para optimizar la organización estudiantil. A diferencia de las agendas tradicionales, Studiary combina una interfaz minimalista inspirada en la filosofía "Zen" con la potencia de una arquitectura moderna que permite su uso tanto en navegadores web como de forma nativa en dispositivos Android.
+<p align="center">
+  <strong>Planifica. Estudia. Avanza.</strong><br>
+  Una aplicación de organización académica que reúne agenda, asignaturas, apuntes y sesiones de estudio en un mismo lugar.
+</p>
 
----
-
-## 🚀 Características Principales
-
-El proyecto se divide en módulos clave diseñados para cubrir todo el ciclo de vida del estudiante:
-
-### 📅 Planificación Inteligente
-* **Calendario Multi-Vista:** Visualización dinámica en formatos anual, mensual y semanal para una planificación estratégica.
-* **Horarios Flexibles:** Gestión de bloques horarios para clases y actividades extracurriculares en jornadas de mañana y tarde.
-
-### 📊 Seguimiento y Rendimiento
-* **Gestión de Calificaciones:** Módulo dedicado para el registro de notas y cálculo de promedios.
-* **Visualización de Datos:** Gráficos interactivos construidos con **Recharts** que permiten analizar el progreso académico visualmente.
-* **Modo de Estudio:** Herramientas específicas para mejorar la concentración y el seguimiento de tareas pendientes.
-
-### 🔔 Productividad Avanzada
-* **Recordatorios Inteligentes:** Sistema de notificaciones para entregas y exámenes.
-* **Exportación de Documentos:** Capacidad para generar reportes en PDF y capturas mediante la integración de `jspdf` y `html2canvas`.
+<p align="center">
+  <img src="https://img.shields.io/badge/Flutter-Mobile-02569B?logo=flutter&logoColor=white" alt="Flutter">
+  <img src="https://img.shields.io/badge/Dart-Language-0175C2?logo=dart&logoColor=white" alt="Dart">
+  <img src="https://img.shields.io/badge/Supabase-Backend-3FCF8E?logo=supabase&logoColor=white" alt="Supabase">
+  <img src="https://img.shields.io/badge/Android-App-3DDC84?logo=android&logoColor=white" alt="Android">
+</p>
 
 ---
 
-## 🛠️ Stack Tecnológico
+## Sobre el proyecto
 
-### Frontend & Web
-* **Next.js 15 (App Router):** Utilizando las últimas capacidades de React 18, incluyendo Server Actions y optimización con Turbopack.
-* **Tailwind CSS:** Para un diseño responsivo y un sistema de diseño basado en utilidad.
-* **Shadcn/UI & Radix UI:** Implementación de componentes accesibles como diálogos, menús desplegables, y hojas laterales (sheets).
+**Studiary** es una aplicación móvil dirigida a estudiantes que quieren organizar sus estudios, centralizar sus materiales y hacer seguimiento de su progreso.
 
-### Mobile Core
-* **Capacitor 7:** Puente nativo que permite convertir la experiencia web en una aplicación Android robusta, utilizando configuraciones de esquema HTTPS y gestión de assets nativos.
+La aplicación está desarrollada con **Flutter y Dart**. Utiliza **Supabase** para la autenticación, la persistencia de datos y la sincronización entre dispositivos, combinada con almacenamiento local para conservar cambios y mejorar la continuidad de uso.
 
-### Backend & Estado
-* **Firebase:** Suite completa para la gestión de datos y persistencia.
-* **Zod & React Hook Form:** Validación estricta de esquemas de datos y manejo eficiente de formularios complejos.
+> **Estado del repositorio:** la aplicación móvil actual se encuentra en [`flutter_app/`](flutter_app/). La raíz del repositorio conserva una versión anterior basada en **Next.js y Capacitor** como referencia durante la transición. La versión Flutter es la implementación móvil principal documentada aquí.
 
----
+## Funcionalidades
 
-## 🎨 Filosofía de Diseño (Zen Blueprint)
+### Organización académica
 
-La aplicación sigue una guía de estilo rigurosa para garantizar la legibilidad y reducir el estrés del usuario:
+- **Agenda y calendario:** vistas de mes, semana y año para consultar clases, exámenes, prácticas y otros eventos.
+- **Horarios:** planificación semanal con perfiles de horario.
+- **Asignaturas:** organización de materias, exámenes, calificaciones y apuntes asociados.
+- **Inicio personalizado:** resumen de próximos eventos, accesos rápidos y objetivos.
 
-* **Paleta de Colores:** Uso de tonos pasteles como *Soft Pink* (#F4C2C2) para calma y *Light Beige* (#F5F5DC) como fondo neutro.
-* **Tipografía:** 'PT Sans' para una experiencia de lectura clara y amigable.
-* **Minimalismo:** Layouts limpios con espaciado generoso para evitar la saturación visual.
+### Estudio y seguimiento
 
----
+- **Sesiones de concentración:** temporizador de estudio con posibilidad de pausar y reanudar.
+- **Registro de actividad:** seguimiento del tiempo dedicado a estudiar.
+- **Progreso:** consulta de estadísticas y evolución de las sesiones.
+- **Recordatorios locales:** avisos de eventos y exámenes en Android.
 
-## 📦 Instalación y Desarrollo
+### Apuntes y personalización
 
-### Requisitos Previos
-* Node.js (Versión recomendada v20+)
-* Android Studio (para compilación nativa)
+- **Cuaderno digital:** creación y edición de apuntes, con recuperación de borradores locales.
+- **Archivos adjuntos:** soporte para documentos, imágenes, vídeos, enlaces y otros archivos.
+- **Personalización visual:** temas y colores configurables.
+- **Cuentas de usuario:** registro e inicio de sesión por correo electrónico o Google.
 
-### Configuración Local
-1.  **Clonar el repositorio:**
-    ```bash
-    git clone [https://github.com/Juanpareja02/Studiary.git](https://github.com/Juanpareja02/Studiary.git)
-    cd Studiary
-    ```
-2.  **Instalar dependencias:**
-    ```bash
-    npm install
-    ```
-3.  **Ejecutar entorno de desarrollo:**
-    ```bash
-    npm run dev
-    ```
+### Sincronización y monetización
 
-### Despliegue en Android
+- **Sincronización en la nube:** datos asociados a cada cuenta, con control de revisiones y tratamiento de cambios offline.
+- **Almacenamiento privado:** archivos en Supabase Storage con políticas de acceso por usuario.
+- **Monetización:** integración con Google AdMob y compras en Google Play para funcionalidades Premium.
+
+## Tecnologías
+
+| Área | Tecnologías |
+| --- | --- |
+| Aplicación móvil | Flutter, Dart, Material 3 |
+| Autenticación | Supabase Auth, Google Sign-In |
+| Base de datos y sincronización | Supabase, PostgreSQL |
+| Archivos | Supabase Storage |
+| Persistencia local | SharedPreferences |
+| Notificaciones | flutter_local_notifications |
+| Monetización | Google Mobile Ads, Google Play Billing |
+| Pruebas | flutter_test |
+| Plataforma de distribución | Android / Google Play |
+
+## Estructura del repositorio
+
+```text
+Studiary/
+├── flutter_app/                 # Aplicación móvil principal (Flutter/Dart)
+│   ├── assets/                  # Logo, mascota y recursos visuales
+│   ├── android/                 # Configuración nativa de Android
+│   ├── lib/
+│   │   ├── main.dart           # Arranque, navegación y pantallas
+│   │   ├── app_state.dart      # Estado y sincronización de la aplicación
+│   │   ├── models.dart         # Modelos de datos
+│   │   ├── services.dart       # Autenticación, nube y monetización
+│   │   ├── sync_merge.dart     # Combinación de cambios entre dispositivos
+│   │   ├── focus_session.dart  # Temporizador de estudio
+│   │   ├── notifications.dart  # Recordatorios locales
+│   │   ├── subject_pages.dart  # Pantallas de asignaturas
+│   │   └── notebook_page.dart  # Cuaderno y edición de apuntes
+│   ├── test/                    # Pruebas automatizadas
+│   └── pubspec.yaml            # Dependencias de Flutter
+├── supabase/
+│   ├── functions/               # Funciones de backend
+│   ├── schema.sql               # Esquema y políticas iniciales
+│   ├── release_sync.sql         # Sincronización
+│   └── premium.sql              # Lógica de Premium
+├── src/                         # Código de la versión web anterior
+├── public/                      # Recursos de la versión anterior
+└── README.md
+```
+
+## Instalación y ejecución
+
+### Requisitos
+
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) compatible con el SDK de Dart indicado en [`pubspec.yaml`](flutter_app/pubspec.yaml).
+- Android Studio o VS Code con las herramientas de Flutter.
+- Emulador Android o dispositivo físico.
+- Proyecto de Supabase configurado, si se quiere utilizar autenticación y sincronización.
+
+### 1. Clonar el repositorio
+
 ```bash
-# Generar la exportación estática
-npm run build
+git clone https://github.com/Juanpareja02/Studiary.git
+cd Studiary/flutter_app
+```
 
-# Sincronizar con el proyecto de Android
-npx cap sync android
+### 2. Instalar dependencias
 
-# Abrir en Android Studio
-npx cap open android
+```bash
+flutter pub get
+```
+
+### 3. Configurar Supabase
+
+Crea un archivo **local** llamado `supabase.env.json` dentro de `flutter_app/`:
+
+```json
+{
+  "SUPABASE_URL": "https://TU-PROYECTO.supabase.co",
+  "SUPABASE_PUBLISHABLE_KEY": "TU_CLAVE_PUBLICABLE"
+}
+```
+
+El cliente usa estas variables mediante `--dart-define-from-file`. El archivo está excluido del control de versiones.
+
+Para preparar un entorno propio hay que configurar Supabase Auth (correo/Google), la base de datos, las políticas RLS, el almacenamiento y las funciones de backend según [`flutter_app/README.md`](flutter_app/README.md) y los scripts de [`supabase/`](supabase/).
+
+**Seguridad:** nunca incluyas claves `service_role`, `secret`, credenciales de firma ni secretos del servidor en el código cliente o en el repositorio.
+
+### 4. Ejecutar la aplicación
+
+```bash
+flutter run --dart-define-from-file=supabase.env.json
+```
+
+### 5. Analizar y ejecutar las pruebas
+
+```bash
+flutter analyze
+flutter test
+```
+
+Las pruebas incluyen componentes visuales, fiabilidad del temporizador, restauración de sesiones y resolución de determinados conflictos de sincronización.
+
+### 6. Generar una compilación Android
+
+Para pruebas:
+
+```bash
+flutter build apk --debug --dart-define-from-file=supabase.env.json
+```
+
+Para una publicación en Google Play:
+
+```bash
+flutter build appbundle --release --dart-define-from-file=supabase.env.json
+```
+
+La compilación `release` requiere configurar previamente la **firma de Android** en `android/key.properties` con una clave de subida válida. No compartas el keystore ni sus contraseñas.
+
+## Decisiones técnicas destacadas
+
+- **Flutter:** base de código compartida para el desarrollo de interfaces móviles; la configuración de distribución actualmente documentada está centrada en Android.
+- **Supabase:** autenticación y persistencia en PostgreSQL, con archivos privados por cuenta.
+- **Persistencia local y sincronización:** almacenamiento de cambios locales y reconciliación de actualizaciones para reducir la pérdida de datos al alternar dispositivos.
+- **Temporizador resiliente:** cálculo basado en tiempo real para evitar que la suspensión de la aplicación altere la duración de la sesión.
+- **Pruebas automatizadas:** casos para la sincronización, los borradores y la continuidad de sesiones.
+
+## Seguridad y privacidad
+
+Los datos se asocian al usuario autenticado. El proyecto incorpora políticas **Row Level Security (RLS)** para restringir el acceso a registros y archivos, además de funciones de backend para operaciones como eliminación de cuenta y verificación de compras.
+
+La configuración final de permisos, proveedores OAuth, políticas y secretos debe revisarse antes de desplegar un entorno nuevo.
+
+## Evolución del proyecto
+
+Studiary comenzó con una implementación web basada en Next.js y Capacitor. Posteriormente se desarrolló una aplicación en Flutter para disponer de una base móvil más específica y facilitar su evolución.
+
+Esta transición permite mostrar experiencia en:
+
+- Desarrollo móvil con Flutter y Dart.
+- Integración de autenticación y servicios en la nube.
+- Persistencia local y sincronización de información.
+- Pruebas, depuración y preparación de versiones Android.
+
+## Autor
+
+**Juan Álvaro Pareja**
+
+- [GitHub](https://github.com/Juanpareja02)
+- [Portfolio](https://juan-alvaro-pareja.vercel.app/)
+
+---
+
+<p align="center"><strong>Studiary — Planifica. Estudia. Avanza.</strong></p>
